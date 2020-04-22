@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'com.jfrog.bintray' version '1.8.5'
+    id 'maven-publish'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id 'com.avast.gradle.docker-compose' version "0.10.10"
+}
+
+group 'org.radarbase'
+version '0.0.1-SNAPSHOT'
+description = 'An S3 connector for the RADAR-base platform.'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+ext {
+
+    confluentVersion = '5.4.1'
+    kafkaVersion = '2.1.1'
+    radarCommonsVersion = '0.12.0'
+
+    minioVersion = '7.0.1'
+
+}
+
+repositories {
+    jcenter()
+    maven { url 'http://packages.confluent.io/maven/' }
+    maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
+    maven { url 'https://dl.bintray.com/radar-base/org.radarbase' }
+
+}
+
+configurations {
+    codacy
+}
+
+dependencies {
+    api group: 'io.confluent', name: 'kafka-connect-storage-cloud', version: confluentVersion
+
+    runtimeOnly group: 'org.radarbase', name: 'radar-commons-unsafe', version: radarCommonsVersion
+
+    compileOnly group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion
+
+    compileOnly group: 'org.apache.kafka', name: 'kafka_2.12', version: kafkaVersion
+
+}
+
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'RADAR-base S3 Connector',
+                'Implementation-Version': project.version
+    }
+}
+
+
+wrapper {
+    gradleVersion '6.3'
+}
+
+if (!hasProperty('profile')) {
+    ext.profile = 'dev'
+}
+
+apply from: "gradle/profile.${profile}.gradle"

@@ -1,0 +1,40 @@
+ext.junitVersion = '4.12'
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+//---------------------------------------------------------------------------//
+// Source Set                                                                //
+//---------------------------------------------------------------------------//
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + main.compileClasspath + test.output + test.compileClasspath
+            runtimeClasspath += main.output + test.output + test.compileClasspath
+        }
+        resources {
+            srcDir 'src/integrationTest/resources'
+        }
+    }
+}
+
+dependencies {
+    testImplementation group: 'junit', name: 'junit', version: junitVersion
+    testImplementation group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion
+
+    integrationTestImplementation(group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion) {
+        exclude group: 'org.slf4j'
+    }
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs the integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    outputs.upToDateWhen { false }
+    testLogging.showStandardStreams = true
+    mustRunAfter test
+}

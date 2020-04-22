@@ -1,0 +1,23 @@
+apply from: 'gradle/test.gradle'
+apply from: 'gradle/publishing.gradle'
+apply from: 'gradle/style.gradle'
+apply plugin: 'idea'
+
+task downloadDependencies {
+    description "Download dependencies"
+    doLast {
+        configurations.getAsMap().each { name, config ->
+            try {
+                config.files
+            } catch (e) {
+                project.logger.info e.message // some cannot be resolved, silentlyish skip them
+            }
+        }
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+    }
+}
