@@ -1,5 +1,4 @@
 apply from: 'gradle/test.gradle'
-apply from: 'gradle/publishing.gradle'
 apply from: 'gradle/style.gradle'
 apply plugin: 'idea'
 

@@ -29,7 +29,7 @@ repositories {
     maven { url 'http://packages.confluent.io/maven/' }
     maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
     maven { url 'https://dl.bintray.com/radar-base/org.radarbase' }
-
+    maven { url 'https://jitpack.io' }
 }
 
 configurations {
@@ -37,7 +37,7 @@ configurations {
 }
 
 dependencies {
-    api group: 'io.confluent', name: 'kafka-connect-storage-cloud', version: confluentVersion
+    api group: 'io.confluent', name: 'kafka-connect-s3', version: confluentVersion
 
     runtimeOnly group: 'org.radarbase', name: 'radar-commons-unsafe', version: radarCommonsVersion
 

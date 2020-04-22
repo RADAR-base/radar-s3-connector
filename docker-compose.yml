@@ -177,14 +177,16 @@ services:
       KAFKA_HEAP_OPTS: "-Xms256m -Xmx768m"
       KAFKA_BROKERS: 3
       CONNECT_LOG4J_LOGGERS: "org.reflections=ERROR"
+      AWS_ACCESS_KEY: "minio"
+      AWS_SECRET_KEY: "minio123"
 
   minio:
     image: minio/minio
     ports:
       - "9000:9000"
-    volumes:
-      - ./data/minio-data:/data
-      - ./data/minio-config:/root/.minio
+#    volumes:
+#      - ./data/minio-data:/data
+#      - ./data/minio-config:/root/.minio
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123
