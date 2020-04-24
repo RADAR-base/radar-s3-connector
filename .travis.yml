@@ -1,0 +1,44 @@
+language: java
+sudo: required
+
+services:
+  - docker
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+env:
+  - DOCKER_COMPOSE_VERSION=1.25.4
+  - DC_FILE: ./docker-compose.yml
+
+before_install:
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - ./gradlew downloadDependencies
+
+script:
+  - ./gradlew check --stacktrace
+  - sudo $DC -f $DC_FILE up -d && sleep 60 && ./gradlew integrationTest --stacktrace
+  - sudo $DC -f $DC_FILE down -v
+deploy:
+  - provider: releases
+    api_key: ${GH_TOKEN}
+    file_glob: true
+    file:
+      - "build/libs/*.jar"
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: script
+    script: ./gradlew bintrayUpload
+    skip_cleanup: true
+    on:
+      tags: true
+
