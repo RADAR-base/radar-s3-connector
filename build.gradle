@@ -6,8 +6,8 @@ plugins {
 }
 
 group 'org.radarbase'
-version '0.0.1-SNAPSHOT'
-description = 'An S3 connector for the RADAR-base platform.'
+version '1.0.0-SNAPSHOT'
+description = 'A S3 connector for the RADAR-base platform.'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
