@@ -91,18 +91,18 @@ public class IntegrationTest {
 
             boolean isBucketAvailable = false;
             int retry = 10;
-            do{
-               isBucketAvailable = client.bucketExists(bucketName);
-               retry--;
+            do {
+                isBucketAvailable = client.bucketExists(bucketName);
+                retry--;
                 Thread.sleep(5_000L);
-            }while(!isBucketAvailable ||retry<0);
+            } while (!isBucketAvailable || retry < 0);
 
-            Iterable<Result<Item>> objects =
-                    client.listObjects(bucketName, "topics/test/", true);
+            Iterable<Result<Item>> objects = client.listObjects(bucketName, "topics/test/", true);
             for (Result<Item> itemResult : objects) {
                 String objectName = itemResult.get().objectName();
                 logger.info("ObjectName {}", objectName);
-                assertTrue(objectName.matches("^topics/test/partition=0/test\\+0\\+00000000[0-9]0.avro$"));
+                assertTrue(objectName
+                        .matches("^topics/test/partition=0/test\\+0\\+00000000[0-9]0.avro$"));
             }
         } catch (InvalidEndpointException | InvalidPortException | InvalidBucketNameException | NoSuchAlgorithmException | InsufficientDataException | InvalidKeyException | XmlParserException | ErrorResponseException | InternalException | InvalidResponseException | IOException e) {
             logger.error("Could not access minio", e);

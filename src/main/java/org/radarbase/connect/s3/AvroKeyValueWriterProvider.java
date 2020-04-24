@@ -19,7 +19,6 @@ import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.fs.Path;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
@@ -27,8 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AvroKeyValueWriterProvider implements RecordWriterProvider<S3SinkConnectorConfig> {
-    private static final Logger log = LoggerFactory
-            .getLogger(AvroKeyValueWriterProvider.class);
+    private static final Logger log = LoggerFactory.getLogger(AvroKeyValueWriterProvider.class);
     private final S3Storage storage;
     private final AvroData avroData;
 
