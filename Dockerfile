@@ -21,7 +21,6 @@ COPY ./gradle/wrapper /code/gradle/wrapper
 COPY ./gradlew /code/
 RUN ./gradlew --version
 
-COPY ./gradle/profile.docker.gradle /code/gradle/
 COPY ./build.gradle ./gradle.properties ./settings.gradle /code/
 
 RUN ./gradlew downloadDependencies copyDependencies

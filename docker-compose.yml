@@ -157,6 +157,7 @@ services:
       - kafka-3
       - schema-registry-1
       - minio
+      - mc
     environment:
       CONNECT_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092
       CONNECT_REST_PORT: 8083
@@ -215,5 +216,3 @@ services:
         "
     depends_on:
     - minio
-#  mc:
-#    image: minio/mc

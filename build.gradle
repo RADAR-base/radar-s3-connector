@@ -3,8 +3,6 @@ plugins {
     id 'java-library'
     id 'com.jfrog.bintray' version '1.8.5'
     id 'maven-publish'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
-    id 'com.avast.gradle.docker-compose' version "0.10.10"
 }
 
 group 'org.radarbase'
@@ -16,12 +14,18 @@ targetCompatibility = '1.8'
 
 ext {
 
+    moduleDescription = 'RADAR-base S3 Connector'
+    website = 'https://radar-base.org'
+    githubRepoName = 'RADAR-base/radar-s3-connector'
+    githubUrl = "https://github.com/${githubRepoName}"
+    issueUrl = "${githubUrl}/issues"
+
     confluentVersion = '5.4.1'
     kafkaVersion = '2.1.1'
     radarCommonsVersion = '0.12.0'
 
+    junitVersion = '5.6.1'
     minioVersion = '7.0.1'
-
 }
 
 repositories {
@@ -32,8 +36,18 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
+
+sourceSets {
+    integrationTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+
 configurations {
-    codacy
+    integrationTestImplementation.extendsFrom implementation, testImplementation
+    integrationTestRuntimeOnly.extendsFrom runtimeOnly, testRuntimeOnly
 }
 
 dependencies {
@@ -44,24 +58,153 @@ dependencies {
     compileOnly group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion
 
     compileOnly group: 'org.apache.kafka', name: 'kafka_2.12', version: kafkaVersion
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: junitVersion
+    testImplementation group: 'org.apache.kafka', name: 'connect-api', version: kafkaVersion
+    testImplementation group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+    testImplementation group: 'io.minio', name: 'minio', version: minioVersion
 
-}
-
-
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'RADAR-base S3 Connector',
-                'Implementation-Version': project.version
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
+    integrationTestImplementation(group: 'org.radarbase', name: 'radar-commons-testing', version: radarCommonsVersion) {
+        exclude group: 'org.slf4j'
     }
 }
 
 
+ext.sharedManifest = manifest {
+    attributes(
+            "Implementation-Title": rootProject.name,
+            "Implementation-Version": version)
+}
+
+jar {
+    manifest {
+        from sharedManifest
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+        setExceptionFormat("full")
+    }
+}
+
+task integrationTest(type: Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter test
+}
+
+tasks.withType(Tar){
+    compression = Compression.GZIP
+    archiveExtension.set('tar.gz')
+}
+
+task downloadDependencies {
+    description "Pre-downloads dependencies"
+    configurations.compileClasspath.files
+    configurations.runtimeClasspath.files
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath.files
+    into "$buildDir/third-party/"
+}
+
+// custom tasks for creating source/javadoc jars
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+    manifest.from sharedManifest
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
+    manifest.from sharedManifest
+}
+
+publishing {
+    publications {
+        mavenJar(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                url = githubUrl as String
+                description = moduleDescription
+
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'nivemaham'
+                        name = 'Nivethika Mahasivam'
+                        email = 'nivethika@thehyve.nl'
+                        organization = 'The Hyve'
+                    }
+                    developer {
+                        id = 'blootsvoets'
+                        name = 'Joris Borgdorff'
+                        email = 'joris@thehyve.nl'
+                        organization = 'The Hyve'
+                    }
+
+                }
+                issueManagement {
+                    system = 'GitHub'
+                    url = issueUrl as String
+                }
+                organization {
+                    name = 'RADAR-base'
+                    url = website
+                }
+                scm {
+                    connection = "scm:git:${githubUrl}" as String
+                    url = githubUrl as String
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    user project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    override false
+    publications 'mavenJar'
+    pkg {
+        repo = project.group
+        name = rootProject.name
+        userOrg = 'radar-base'
+        desc = moduleDescription
+        licenses = ['Apache-2.0']
+        websiteUrl = website
+        issueTrackerUrl = issueUrl
+        vcsUrl = githubUrl
+        githubRepo = githubRepoName
+        githubReleaseNotesFile = 'README.md'
+        version {
+            name = project.version
+            desc = description
+            vcsTag = System.getenv('TRAVIS_TAG')
+            released = new Date()
+        }
+    }
+}
+
 wrapper {
     gradleVersion '6.3'
 }
-
-if (!hasProperty('profile')) {
-    ext.profile = 'dev'
-}
-
-apply from: "gradle/profile.${profile}.gradle"
