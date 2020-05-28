@@ -3,6 +3,7 @@ plugins {
     id 'java-library'
     id 'com.jfrog.bintray' version '1.8.5'
     id 'maven-publish'
+    id 'com.avast.gradle.docker-compose' version "0.10.10"
 }
 
 group 'org.radarbase'
@@ -100,7 +101,19 @@ task integrationTest(type: Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     shouldRunAfter test
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+        setExceptionFormat("full")
+    }
+
+    doFirst {
+        delete fileTree("src/integrationTest/docker/buckets").exclude("**/.gitkeep")
+    }
 }
+
+dockerCompose.isRequiredBy(integrationTest)
 
 tasks.withType(Tar){
     compression = Compression.GZIP

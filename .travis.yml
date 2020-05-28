@@ -1,5 +1,4 @@
 language: java
-sudo: required
 
 services:
   - docker
@@ -22,10 +21,12 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
   - ./gradlew downloadDependencies
 
+before_script:
+  - export PATH="/usr/local/bin:$PATH"
+
 script:
-  - ./gradlew check --stacktrace
-  - sudo /usr/local/bin/docker-compose up -d && sleep 90 && ./gradlew integrationTest --stacktrace
-  - sudo /usr/local/bin/docker-compose down
+  - ./gradlew check integrationTest --stacktrace
+
 deploy:
   - provider: releases
     api_key: ${GH_TOKEN}

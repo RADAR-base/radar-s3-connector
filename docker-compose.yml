@@ -152,7 +152,6 @@ services:
       - kafka-3
       - schema-registry-1
       - minio
-      - mc
     environment:
       CONNECT_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092
       CONNECT_REST_PORT: 8083
@@ -183,28 +182,8 @@ services:
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123
+    volumes:
+      - "./src/integrationTest/docker/buckets:/data"
     command:
       - server
       - /data
-  mc:
-    image: minio/mc
-    environment:
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: minio123
-    entrypoint: >
-        /bin/sh -c "
-        echo Waiting for minio service to start...;
-        while ! nc -z minio 9000;
-        do
-        sleep 1;
-        done;
-        echo Connected!;
-        mc config host add myminio http://minio:9000 minio minio123;
-        /usr/bin/mc rm --recursive --force myminio/uploads;
-        /usr/bin/mc mb myminio/uploads;
-        /usr/bin/mc policy download myminio/uploads;
-        /usr/bin/mc policy upload myminio/uploads;
-        exit 0;
-        "
-    depends_on:
-    - minio
