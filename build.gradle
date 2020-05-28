@@ -107,13 +107,13 @@ task integrationTest(type: Test) {
         showStandardStreams = true
         setExceptionFormat("full")
     }
-
-    doFirst {
-        delete fileTree("src/integrationTest/docker/buckets").exclude("**/.gitkeep")
-    }
 }
 
+task cleanBuckets(type: Delete) {
+    delete "src/integrationTest/docker/buckets/.minio.sys", "src/integrationTest/docker/buckets/uploads/topics"
+}
 dockerCompose.isRequiredBy(integrationTest)
+composeUp.dependsOn(cleanBuckets)
 
 tasks.withType(Tar){
     compression = Compression.GZIP
