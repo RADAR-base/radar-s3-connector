@@ -82,12 +82,37 @@ public class AvroKeyValueWriterProvider implements RecordWriterProvider<S3SinkCo
 
         @Override
         public void write(SinkRecord record) {
-
             final Schema keySchema = record.keySchema();
             final Schema valueSchema = record.valueSchema();
 
-            if (this.combinedSchema == null) {
+            org.apache.avro.Schema schema = getCombinedSchema(keySchema, valueSchema);
 
+            log.trace("Sink record: {}", record);
+            GenericRecord combinedRecord = new GenericData.Record(schema);
+            try {
+                write(combinedRecord, 1, valueSchema, record.value());
+                if (combinedRecord.get(1) == null) {
+                    if (config.nullValueBehavior().equalsIgnoreCase(
+                            S3SinkConnectorConfig.BehaviorOnNullValues.IGNORE.toString())) {
+                        log.debug(
+                                "Null valued record cannot be written to output as Avro. Skipping. Record Key: {}",
+                                record.key());
+                    } else {
+                        throw new ConnectException(
+                                "Null valued records are not writeable with current behavior.on.null.values 'settings.");
+                    }
+                } else {
+                    write(combinedRecord, 0, keySchema, record.key());
+                    this.writer.append(combinedRecord);
+                }
+            } catch (IOException ex) {
+                log.error("Failed to write record {} to Avro file", record, ex);
+                throw new ConnectException(ex);
+            }
+        }
+
+        private org.apache.avro.Schema getCombinedSchema(Schema keySchema, Schema valueSchema) {
+            if (this.combinedSchema == null) {
                 SchemaBuilder.RecordBuilder<org.apache.avro.Schema> builder = SchemaBuilder
                         .record(getSchemaName(keySchema) + "_" + getSchemaName(valueSchema))
                         .namespace("org.radarbase.kafka").doc("combined key-value record");
@@ -102,38 +127,15 @@ public class AvroKeyValueWriterProvider implements RecordWriterProvider<S3SinkCo
                     this.s3out = storage.create(filename, true);
                     this.writer.setCodec(CodecFactory.fromString(config.getAvroCodec()));
                     this.writer.create(combinedSchema, this.s3out);
-                } catch (IOException var5) {
-                    throw new ConnectException(var5);
+                } catch (IOException ex) {
+                    log.error("Cannot create combined schema for schemas {} and {}", keySchema, valueSchema, ex);
+                    throw new ConnectException(ex);
                 }
             }
 
-            log.trace("Sink record: {}", record);
-            GenericRecord combinedRecord = new GenericData.Record(combinedSchema);
-            write(combinedRecord, 0, keySchema, record.key());
-            write(combinedRecord, 1, valueSchema, record.value());
-            Object value = avroData.fromConnectData(valueSchema, record.value());
-            try {
-                if (value instanceof NonRecordContainer) {
-                    value = ((NonRecordContainer) value).getValue();
-                }
-
-                if (value == null) {
-                    if (config.nullValueBehavior().equalsIgnoreCase(
-                            S3SinkConnectorConfig.BehaviorOnNullValues.IGNORE.toString())) {
-                        log.debug(
-                                "Null valued record cannot be written to output as Avro. Skipping. Record Key: {}",
-                                record.key());
-                    } else {
-                        throw new ConnectException(
-                                "Null valued records are not writeable with current behavior.on.null.values 'settings.");
-                    }
-                } else {
-                    this.writer.append(combinedRecord);
-                }
-            } catch (IOException var4) {
-                throw new ConnectException(var4);
-            }
+            return combinedSchema;
         }
+
 
         private void write(GenericRecord record, int index, Schema schema, Object data) {
             if (data == null) {
@@ -150,8 +152,9 @@ public class AvroKeyValueWriterProvider implements RecordWriterProvider<S3SinkCo
         public void close() {
             try {
                 this.writer.close();
-            } catch (IOException var2) {
-                throw new ConnectException(var2);
+            } catch (IOException ex) {
+                log.error("Cannot close Avro writer", ex);
+                throw new ConnectException(ex);
             }
         }
 
@@ -161,8 +164,9 @@ public class AvroKeyValueWriterProvider implements RecordWriterProvider<S3SinkCo
                 this.writer.flush();
                 this.s3out.commit();
                 this.writer.close();
-            } catch (IOException var2) {
-                throw new ConnectException(var2);
+            } catch (IOException ex) {
+                log.error("Cannot commit data to Avro writer", ex);
+                throw new ConnectException(ex);
             }
         }
     }
