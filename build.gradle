@@ -9,8 +9,8 @@ group 'org.radarbase'
 version '1.0.1-SNAPSHOT'
 description = 'A S3 connector for the RADAR-base platform.'
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
 
 ext {
 
