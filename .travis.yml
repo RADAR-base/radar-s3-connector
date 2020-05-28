@@ -15,7 +15,6 @@ cache:
 
 env:
   - DOCKER_COMPOSE_VERSION=1.25.4
-  - DC_FILE=./docker-compose.yml
 
 before_install:
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -25,8 +24,8 @@ before_install:
 
 script:
   - ./gradlew check --stacktrace
-  - sudo docker-compose up -d && sleep 90 && ./gradlew integrationTest --stacktrace
-  - sudo docker-compose down
+  - sudo /usr/local/bin/docker-compose up -d && sleep 90 && ./gradlew integrationTest --stacktrace
+  - sudo /usr/local/bin/docker-compose down
 deploy:
   - provider: releases
     api_key: ${GH_TOKEN}
@@ -41,4 +40,3 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-
