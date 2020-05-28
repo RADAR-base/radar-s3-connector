@@ -6,11 +6,11 @@ plugins {
 }
 
 group 'org.radarbase'
-version '1.0.0'
+version '1.0.1-SNAPSHOT'
 description = 'A S3 connector for the RADAR-base platform.'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = '11'
+targetCompatibility = '11'
 
 ext {
 
@@ -20,18 +20,18 @@ ext {
     githubUrl = "https://github.com/${githubRepoName}"
     issueUrl = "${githubUrl}/issues"
 
-    confluentVersion = '5.4.1'
-    kafkaVersion = '2.1.1'
-    radarCommonsVersion = '0.12.0'
+    confluentVersion = '5.5.0'
+    kafkaVersion = '2.5.0'
+    radarCommonsVersion = '0.12.2'
 
     junitVersion = '5.6.1'
-    minioVersion = '7.0.1'
+    minioVersion = '7.0.2'
 }
 
 repositories {
     jcenter()
-    maven { url 'http://packages.confluent.io/maven/' }
-    maven { url 'http://dl.bintray.com/typesafe/maven-releases' }
+    maven { url 'https://packages.confluent.io/maven/' }
+    maven { url 'https://dl.bintray.com/typesafe/maven-releases' }
     maven { url 'https://dl.bintray.com/radar-base/org.radarbase' }
     maven { url 'https://jitpack.io' }
 }
@@ -206,5 +206,5 @@ bintray {
 }
 
 wrapper {
-    gradleVersion '6.3'
+    gradleVersion '6.4.1'
 }
